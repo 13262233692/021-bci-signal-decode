@@ -1,6 +1,7 @@
 import numpy as np
 from scipy import signal
 from config import Config
+from artifact_removal import ICAArtifactRemover
 
 
 class SignalProcessor:
@@ -12,6 +13,14 @@ class SignalProcessor:
         self.bandpass_high = Config.BANDPASS_HIGH
 
         self._init_filters()
+
+        self.ica_remover = ICAArtifactRemover(
+            num_channels=self.num_channels,
+            sample_rate=self.sample_rate,
+            window_seconds=Config.ICA_WINDOW_SECONDS,
+            retrain_interval_seconds=Config.ICA_RETRAIN_INTERVAL,
+            enable=Config.ICA_ENABLE
+        )
 
     def _init_filters(self):
         nyquist = self.sample_rate / 2.0
@@ -57,7 +66,9 @@ class SignalProcessor:
         notch_filtered = self.apply_notch_filter(data_chunk)
         bandpass_filtered = self.apply_bandpass_filter(notch_filtered)
 
-        return bandpass_filtered
+        clean_signal = self.ica_remover.process_chunk(bandpass_filtered)
+
+        return clean_signal
 
     def reset_state(self):
         self._notch_zi = np.zeros(
@@ -66,3 +77,4 @@ class SignalProcessor:
         self._bp_zi = np.zeros(
             (self.num_channels, max(len(self.bp_a), len(self.bp_b)) - 1)
         )
+        self.ica_remover.reset()

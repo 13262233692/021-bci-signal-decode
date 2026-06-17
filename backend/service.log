@@ -1,0 +1,6 @@
+Starting BCI service at 2026-06-17 17:49:19
+Python: C:\Users\ZhuanZ\AppData\Local\Programs\Python\Python312\python.exe
+Script dir: d:\SOLO-13\021-bci-signal-decode\backend
+Service started with PID: 54688
+C:\Users\ZhuanZ\AppData\Local\Programs\Python\Python312\python.exe: can't open file 'd:\\SOLO-13\\021-bci-signal-decode\\backend\\quick_start.py': [Errno 2] No such file or directory
+Service exited early with code: 2

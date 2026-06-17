@@ -25,3 +25,8 @@ class Config:
     CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "100"))
 
     SIMULATE_MODE = os.getenv("SIMULATE_MODE", "true").lower() == "true"
+
+    ICA_ENABLE = os.getenv("ICA_ENABLE", "true").lower() == "true"
+    ICA_WINDOW_SECONDS = float(os.getenv("ICA_WINDOW_SECONDS", "2.0"))
+    ICA_RETRAIN_INTERVAL = float(os.getenv("ICA_RETRAIN_INTERVAL", "10.0"))
+    ICA_INJECT_ARTIFACTS = os.getenv("ICA_INJECT_ARTIFACTS", "true").lower() == "true"

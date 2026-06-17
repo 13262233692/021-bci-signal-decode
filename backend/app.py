@@ -117,6 +117,12 @@ def status():
     })
 
 
+@app.route('/api/ica_status')
+def ica_status():
+    ica_info = signal_processor.ica_remover.get_status()
+    return jsonify(ica_info)
+
+
 @socketio.on('connect')
 def handle_connect():
     print("[SocketIO] Client connected", flush=True)

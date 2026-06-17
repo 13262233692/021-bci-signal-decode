@@ -1,0 +1,28 @@
+=== DIAGNOSTIC START ===
+Python version: 3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]
+Python executable: C:\Users\ZhuanZ\AppData\Local\Programs\Python\Python312\python.exe
+CWD: d:\SOLO-13\021-bci-signal-decode\backend
+
+[1] Testing imports...
+  Flask OK: 3.0.0
+  NumPy OK: 1.26.2
+  PyZMQ OK: 25.1.2
+  Redis OK: 5.0.1
+  SciPy OK: 1.11.4
+  python-dotenv OK
+
+[2] Importing project modules...
+  config.py OK
+    FLASK_HOST=0.0.0.0
+    FLASK_PORT=5000
+  signal_processing.py OK
+  redis_queue.py OK
+  zmq_subscriber.py OK
+  simulator.py OK
+
+[3] Creating components...
+  SignalProcessor created OK
+  RedisQueueManager created OK
+  SignalSimulator created OK
+
+=== DIAGNOSTIC COMPLETE ===
