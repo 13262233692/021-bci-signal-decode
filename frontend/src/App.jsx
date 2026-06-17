@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react'
 import { useSignalSocket } from './hooks/useSignalSocket'
+import { usePerformanceMonitor } from './hooks/usePerformanceMonitor'
 import SignalChart from './components/SignalChart'
+import PerformanceMonitor from './components/PerformanceMonitor'
 
 export default function App() {
   const {
@@ -11,6 +13,9 @@ export default function App() {
     subscribe,
     reset
   } = useSignalSocket()
+
+  const perfStats = usePerformanceMonitor()
+  const [showPerf, setShowPerf] = useState(true)
 
   const numChannels = config?.channels || 64
   const sampleRate = config?.sampleRate || 1000
@@ -84,6 +89,17 @@ export default function App() {
           <span className="stat-label">记录时长</span>
           <span className="stat-value">{formatDuration}</span>
         </div>
+        <div className="stat-item">
+          <span className="stat-label">渲染帧率</span>
+          <span
+            className="stat-value"
+            style={{
+              color: perfStats.fps >= 50 ? '#3fb950' : perfStats.fps >= 30 ? '#d29922' : '#f85149'
+            }}
+          >
+            {perfStats.fps} FPS
+          </span>
+        </div>
       </div>
 
       <div className="chart-container">
@@ -93,9 +109,15 @@ export default function App() {
           </button>
           <button
             className="control-btn primary"
-            onClick={() => handleReset()}
+            onClick={handleReset}
           >
             ⏹ 清空缓冲区
+          </button>
+          <button
+            className="control-btn"
+            onClick={() => setShowPerf(!showPerf)}
+          >
+            {showPerf ? '📊 隐藏性能' : '📊 显示性能'}
           </button>
         </div>
         <div className="channel-chart">
@@ -105,6 +127,9 @@ export default function App() {
             config={config}
           />
         </div>
+        {showPerf && (
+          <PerformanceMonitor stats={perfStats} />
+        )}
       </div>
 
       <footer className="app-footer">
@@ -120,6 +145,10 @@ export default function App() {
           <div className="footer-item">
             <span>🗃️</span>
             <span>Redis Queue → Ready</span>
+          </div>
+          <div className="footer-item">
+            <span>🎨</span>
+            <span>渲染 → Canvas 2D + 环形缓冲</span>
           </div>
         </div>
         <div>

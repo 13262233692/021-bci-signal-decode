@@ -209,3 +209,97 @@ body {
   align-items: center;
   gap: 6px;
 }
+
+.perf-monitor {
+  position: absolute;
+  left: 24px;
+  top: 60px;
+  background: rgba(22, 27, 34, 0.98);
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 12px 16px;
+  min-width: 260px;
+  font-size: 12px;
+  z-index: 5;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.perf-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(48, 54, 61, 0.5);
+}
+
+.perf-row:last-of-type {
+  border-bottom: none;
+}
+
+.perf-label {
+  color: #8b949e;
+  font-size: 11px;
+}
+
+.perf-value {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-weight: 600;
+  color: #c9d1d9;
+}
+
+.perf-value.canvas-mode {
+  color: #58a6ff;
+}
+
+.perf-value.gc-zero {
+  color: #3fb950;
+}
+
+.perf-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.perf-bar {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.perf-bar-fill {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #3fb950, #58a6ff);
+  transition: width 0.3s ease;
+  min-width: 20px;
+}
+
+.perf-footer {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #30363d;
+}
+
+.perf-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #6e7681;
+}
+
+.perf-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #3fb950;
+  animation: perfPulse 2s infinite;
+}
+
+@keyframes perfPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}

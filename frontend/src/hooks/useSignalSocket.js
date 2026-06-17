@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { io } from 'socket.io-client'
+import { CircularFrameBuffer } from '../utils/CircularFrameBuffer'
 
-const MAX_TIMESTAMPS = 10000
+const MAX_FRAMES = 30000
 const DEFAULT_CHANNELS = 64
 
 export function useSignalSocket() {
@@ -9,60 +10,66 @@ export function useSignalSocket() {
   const [config, setConfig] = useState(null)
   const [totalSamples, setTotalSamples] = useState(0)
   const [packetRate, setPacketRate] = useState(0)
+  const [buffer, setBuffer] = useState(null)
 
   const socketRef = useRef(null)
-  const bufferRef = useRef({
-    timestamps: [],
-    channels: Array.from({ length: DEFAULT_CHANNELS }, () => [])
-  })
+  const bufferRef = useRef(null)
   const listenersRef = useRef([])
   const packetCountRef = useRef(0)
   const lastRateUpdateRef = useRef(Date.now())
   const configRef = useRef(null)
+  const notifyTimerRef = useRef(null)
+  const pendingNotifyRef = useRef(false)
 
   const initBuffer = useCallback((numChannels) => {
-    bufferRef.current = {
-      timestamps: [],
-      channels: Array.from({ length: numChannels }, () => [])
-    }
+    const buf = new CircularFrameBuffer(numChannels, MAX_FRAMES)
+    bufferRef.current = buf
+    setBuffer(buf)
+    return buf
   }, [])
 
   const ensureBuffer = useCallback((numChannels) => {
-    const buf = bufferRef.current
-    if (!buf.channels || buf.channels.length !== numChannels) {
-      initBuffer(numChannels)
+    if (!bufferRef.current || bufferRef.current.numChannels !== numChannels) {
+      return initBuffer(numChannels)
     }
+    return bufferRef.current
   }, [initBuffer])
 
   const processPackets = useCallback((packets) => {
+    const numChannels = configRef.current?.channels || DEFAULT_CHANNELS
+    const buf = ensureBuffer(numChannels)
+
+    let totalNewSamples = 0
+
     for (const packet of packets) {
       const { timestamps, samples } = packet
       if (!timestamps || !samples || !samples.length) continue
 
-      const numChannels = samples.length
-      ensureBuffer(numChannels)
+      const packetSize = timestamps.length
+      if (packetSize === 0) continue
 
-      const buf = bufferRef.current
-      buf.timestamps.push(...timestamps)
-
-      for (let ch = 0; ch < numChannels; ch++) {
-        if (buf.channels[ch]) {
-          buf.channels[ch].push(...samples[ch])
-        }
+      const tsArr = new Float64Array(timestamps)
+      const chArr = new Array(samples.length)
+      for (let ch = 0; ch < samples.length; ch++) {
+        chArr[ch] = new Float32Array(samples[ch])
       }
 
-      setTotalSamples(prev => prev + timestamps.length)
-      packetCountRef.current++
+      buf.pushBatch(tsArr, chArr)
+      totalNewSamples += packetSize
     }
 
-    const buf = bufferRef.current
-    while (buf.timestamps.length > MAX_TIMESTAMPS) {
-      const overflow = buf.timestamps.length - MAX_TIMESTAMPS
-      buf.timestamps.splice(0, overflow)
-      for (let ch = 0; ch < buf.channels.length; ch++) {
-        if (buf.channels[ch]) {
-          buf.channels[ch].splice(0, overflow)
-        }
+    if (totalNewSamples > 0) {
+      setTotalSamples(prev => prev + totalNewSamples)
+      packetCountRef.current += packets.length
+
+      if (!pendingNotifyRef.current) {
+        pendingNotifyRef.current = true
+        notifyTimerRef.current = requestAnimationFrame(() => {
+          pendingNotifyRef.current = false
+          for (const listener of listenersRef.current) {
+            listener(bufferRef.current)
+          }
+        })
       }
     }
 
@@ -71,13 +78,6 @@ export function useSignalSocket() {
       setPacketRate(packetCountRef.current)
       packetCountRef.current = 0
       lastRateUpdateRef.current = now
-    }
-
-    for (const listener of listenersRef.current) {
-      listener({
-        timestamps: buf.timestamps,
-        channels: buf.channels
-      })
     }
   }, [ensureBuffer])
 
@@ -121,18 +121,17 @@ export function useSignalSocket() {
     return () => {
       socket.disconnect()
       socketRef.current = null
+      if (notifyTimerRef.current) {
+        cancelAnimationFrame(notifyTimerRef.current)
+      }
     }
   }, [processPackets, initBuffer])
 
   const subscribe = useCallback((listener) => {
     listenersRef.current.push(listener)
 
-    const buf = bufferRef.current
-    if (buf.timestamps.length > 0) {
-      listener({
-        timestamps: buf.timestamps,
-        channels: buf.channels
-      })
+    if (bufferRef.current && bufferRef.current.length > 0) {
+      listener(bufferRef.current)
     }
 
     return () => {
@@ -154,6 +153,7 @@ export function useSignalSocket() {
     config,
     totalSamples,
     packetRate,
+    buffer,
     subscribe,
     reset
   }
